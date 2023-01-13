@@ -8,10 +8,25 @@
 </head>
 <body>
   <main>
-    <h1>snake</h1>
+    <header>
+      <h1>snake</h1>
+      <div class="scores">
+        <span>score <b id="score">0</b></span>
+      </div>
+    </header>
+
     <canvas id="board" width="480" height="480"></canvas>
-    <p class="hint">arrow keys or wasd</p>
+
+    <p class="hint">arrow keys or wasd. press space to restart after game over.</p>
+
+    <div id="overlay" class="overlay hidden">
+      <div class="card">
+        <h2 id="overlay-title">game over</h2>
+        <p id="overlay-text">press space to play again</p>
+      </div>
+    </div>
   </main>
+
   <script src="game.js"></script>
 </body>
 </html>

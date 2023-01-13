@@ -1,13 +1,16 @@
 // snake. 24x24 grid on a 480px canvas, so 20px per cell.
-// first pass: just draw the snake and let it move with arrow keys.
 
 const GRID = 24;
 const CELL = 20;
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlay-title');
+const overlayText = document.getElementById('overlay-text');
 
-let snake, dir, nextDir;
+let snake, dir, nextDir, food, score, alive;
 
 function reset() {
   const cy = Math.floor(GRID / 2);
@@ -18,23 +21,72 @@ function reset() {
   ];
   dir = { x: 1, y: 0 };
   nextDir = { x: 1, y: 0 };
+  score = 0;
+  alive = true;
+  scoreEl.textContent = '0';
+  spawnFood();
+  overlay.classList.add('hidden');
+}
+
+function spawnFood() {
+  // pick a random empty cell. brute force, fine for 24x24.
+  while (true) {
+    const fx = Math.floor(Math.random() * GRID);
+    const fy = Math.floor(Math.random() * GRID);
+    let onSnake = false;
+    for (const s of snake) {
+      if (s.x === fx && s.y === fy) { onSnake = true; break; }
+    }
+    if (!onSnake) {
+      food = { x: fx, y: fy };
+      return;
+    }
+  }
 }
 
 function step() {
+  if (!alive) return;
   dir = nextDir;
   const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-  // wrap for now, collision handling comes later
-  head.x = (head.x + GRID) % GRID;
-  head.y = (head.y + GRID) % GRID;
+
+  // walls
+  if (head.x < 0 || head.y < 0 || head.x >= GRID || head.y >= GRID) {
+    return die();
+  }
+  // self
+  for (const s of snake) {
+    if (s.x === head.x && s.y === head.y) return die();
+  }
+
   snake.unshift(head);
-  snake.pop();
+
+  if (head.x === food.x && head.y === food.y) {
+    score += 1;
+    scoreEl.textContent = score;
+    spawnFood();
+  } else {
+    snake.pop();
+  }
+
   draw();
+}
+
+function die() {
+  alive = false;
+  overlayTitle.textContent = 'game over';
+  overlayText.textContent = `you got ${score}. press space to play again`;
+  overlay.classList.remove('hidden');
 }
 
 function draw() {
   ctx.fillStyle = '#1c1f24';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  // food
+  ctx.fillStyle = '#f0a0a0';
+  ctx.fillRect(food.x * CELL + 3, food.y * CELL + 3, CELL - 6, CELL - 6);
+
+  // snake. head a bit brighter.
   for (let i = 0; i < snake.length; i++) {
     ctx.fillStyle = i === 0 ? '#c8f0a0' : '#8ab86a';
     const s = snake[i];
@@ -53,8 +105,9 @@ document.addEventListener('keydown', (e) => {
   else if (k === 'arrowdown' || k === 's') { setDir(0, 1); e.preventDefault(); }
   else if (k === 'arrowleft' || k === 'a') { setDir(-1, 0); e.preventDefault(); }
   else if (k === 'arrowright' || k === 'd') { setDir(1, 0); e.preventDefault(); }
+  else if (k === ' ' && !alive) { reset(); }
 });
 
 reset();
 draw();
-setInterval(step, 200);
+setInterval(step, 150);
