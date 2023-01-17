@@ -1,4 +1,5 @@
-// snake. 24x24 grid on a 480px canvas, so 20px per cell.
+// classic snake. 24x24 grid, canvas is 480px so each cell is 20px.
+// speed gets faster as you eat. clamped at 60ms so it stays playable.
 
 const GRID = 24;
 const CELL = 20;
@@ -6,13 +7,19 @@ const CELL = 20;
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
 const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
 
-let snake, dir, nextDir, food, score, alive;
+let snake, dir, nextDir, food, score, alive, tickTimer;
+
+const BEST_KEY = 'snake.best';
+let best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
+bestEl.textContent = best;
 
 function reset() {
+  // start length 3, middle of board, moving right
   const cy = Math.floor(GRID / 2);
   snake = [
     { x: 6, y: cy },
@@ -26,6 +33,7 @@ function reset() {
   scoreEl.textContent = '0';
   spawnFood();
   overlay.classList.add('hidden');
+  schedule();
 }
 
 function spawnFood() {
@@ -42,6 +50,16 @@ function spawnFood() {
       return;
     }
   }
+}
+
+function tickMs() {
+  // 200ms at 0 food, drops by 8ms per food, floors at 60ms.
+  return Math.max(60, 200 - score * 8);
+}
+
+function schedule() {
+  clearTimeout(tickTimer);
+  tickTimer = setTimeout(step, tickMs());
 }
 
 function step() {
@@ -63,16 +81,23 @@ function step() {
   if (head.x === food.x && head.y === food.y) {
     score += 1;
     scoreEl.textContent = score;
+    if (score > best) {
+      best = score;
+      bestEl.textContent = best;
+      localStorage.setItem(BEST_KEY, best);
+    }
     spawnFood();
   } else {
     snake.pop();
   }
 
   draw();
+  schedule();
 }
 
 function die() {
   alive = false;
+  clearTimeout(tickTimer);
   overlayTitle.textContent = 'game over';
   overlayText.textContent = `you got ${score}. press space to play again`;
   overlay.classList.remove('hidden');
@@ -94,6 +119,7 @@ function draw() {
   }
 }
 
+// input. block 180-degree turns from the current direction.
 function setDir(nx, ny) {
   if (nx === -dir.x && ny === -dir.y) return;
   nextDir = { x: nx, y: ny };
@@ -110,4 +136,3 @@ document.addEventListener('keydown', (e) => {
 
 reset();
 draw();
-setInterval(step, 150);
