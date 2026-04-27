@@ -1,5 +1,7 @@
 # snake
 
+![](docs/screenshot.png)
+
 classic snake on a canvas. arrow keys, gets faster as you grow.
 
 built this one weekend. no libraries, just html, css and a canvas. 24x24 grid, snake starts at length 3, food spawns in random empty cells, eating it adds a segment. hit a wall or yourself and it ends.
